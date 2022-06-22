@@ -523,7 +523,7 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, \
         t2=time.time()
         caltime=(t2-t1)/60
         print(f'-----------------------------epoch{epoch+1}--------------------------------')
-        print(f'epochtime:{caltime:.4f} minutes\n, train_loss:{val_train[0]*1000:.4f}, val_loss:{val_val[0]*1000:.4f}')
+        print(f'epochtime:{caltime:.4f} minutes\n train_loss:{val_train[0]*1000:.4f}, val_loss:{val_val[0]*1000:.4f}')
         t1=time.time()
 
     return train_loss_list, val_loss_list
