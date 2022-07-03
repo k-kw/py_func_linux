@@ -314,7 +314,7 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
                 break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve"):
+        elif(mean_or_improve=="improve" and epoch>=1):
             notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
             if(endflg):
                 break           
@@ -408,7 +408,7 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
                 break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve"):
+        elif(mean_or_improve=="improve" and epoch>=1):
             notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
             if(endflg):
                 break
@@ -502,7 +502,7 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
                 break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve"):
+        elif(mean_or_improve=="improve" and epoch>=1):
             notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
             if(endflg):
                 break
@@ -576,7 +576,7 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
                 break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve"):
+        elif(mean_or_improve=="improve" and epoch>=1):
             notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
             if(endflg):
                 break
