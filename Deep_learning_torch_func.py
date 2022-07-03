@@ -329,7 +329,8 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     L1 = False, alpha = None, L2 = False, lamda = None,
-    scheduler = None, gausnoise = False, stddev = 0.01,
+    scheduler = None, 
+    gausnoise = False, stddev = 0.01,
     modelsavedir = None, saveepoch = 100):
     """
     transfer displaying learning_curv from this function.
