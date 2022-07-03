@@ -185,6 +185,13 @@ def endimprove(val_loss_list, decision_num, notimpv_cnt, disp_epoch):
 
 
 
+#model save only improvement 
+def save_improve_model(modelsavedir, val_loss_list, model):
+    os.makedirs(modelsavedir, exist_ok=True)
+    if(val_loss_list[-1]<val_loss_list[-2]):
+        mdpath = osp.join(modelsavedir, "sota.pth")
+        torch.save(model.state_dict(), mdpath)
+
 
 #評価・訓練関数
 #Deep Learning validation(image classification)
@@ -238,7 +245,7 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     L1 = False, alpha = None, L2 = False, lamda = None, #正則化
     mixalpha = 1.0, #MIXUP alpha
     scheduler = None, #学習率スケジューラ
-    modelsavedir = None, saveepoch = 100, saveinterval = 10 #モデル保存、ディレクトリ、エポック
+    modelsavedir = None, saveepoch = 100 #モデル保存、ディレクトリ、エポック
     ):
 
 
@@ -288,14 +295,12 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_acc_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and (((epoch+1) >= saveepoch) and ((epoch+1)-saveepoch)%saveinterval == 0):
-            os.makedirs(modelsavedir, exist_ok=True)
-            mdpath = osp.join(modelsavedir, "epoch{}.pth".format(epoch + 1))
-            torch.save(model.state_dict(), mdpath)
+        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
+            save_improve_model(modelsavedir, val_loss_list, model)
         
 
         print(f'---------------------------epoch{epoch+1}------------------------------')
-        print(f'val_acc{val_val[0]:.4f} ,train_acc{val_train[0]:.4f}')
+        print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
         t2=time.time()
         caltime=(t2-t1)/60
         print(f'epochtime:{caltime:.4f} minutes')
@@ -325,7 +330,7 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     L1 = False, alpha = None, L2 = False, lamda = None,
     scheduler = None, gausnoise = False, stddev = 0.01,
-    modelsavedir = None, saveepoch = 100, saveinterval = 10):
+    modelsavedir = None, saveepoch = 100):
     """
     transfer displaying learning_curv from this function.
     select weight decay option
@@ -383,14 +388,12 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_acc_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and (((epoch+1) >= saveepoch) and ((epoch+1)-saveepoch)%saveinterval == 0):
-            os.makedirs(modelsavedir, exist_ok=True)
-            mdpath = osp.join(modelsavedir, "epoch{}.pth".format(epoch + 1))
-            torch.save(model.state_dict(), mdpath)
+        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
+            save_improve_model(modelsavedir, val_loss_list, model)
         
         #進捗表示
         print(f'----------------------------epoch{epoch+1}------------------------------')
-        print(f'val_acc{val_val[0]:.4f} ,train_acc{val_train[0]:.4f}')
+        print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
         t2=time.time()
         caltime=(t2-t1)/60
         print(f'epochtime:{caltime:.4f} minutes')
@@ -444,7 +447,7 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     mixalpha = 1.0, scheduler = None, 
-    modelsavedir = None, saveepoch = 100, saveinterval = 10):
+    modelsavedir = None, saveepoch = 100):
     t1=time.time()
     train_loss_list=[]
     val_loss_list=[]
@@ -480,10 +483,8 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
         val_loss_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and (((epoch+1) >= saveepoch) and ((epoch+1)-saveepoch)%saveinterval == 0):
-            os.makedirs(modelsavedir, exist_ok=True)
-            mdpath = osp.join(modelsavedir, "epoch{}.pth".format(epoch + 1))
-            torch.save(model.state_dict(), mdpath)
+        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
+            save_improve_model(modelsavedir, val_loss_list, model)
 
         #進捗表示
         t2=time.time()
@@ -514,7 +515,7 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     gausnoise = False, stddev = 0.01, 
-    modelsavedir = None, saveepoch = 100, saveinterval = 10):
+    modelsavedir = None, saveepoch = 100):
     """
     transfer displaying learning_curv from this function.
     """
@@ -556,10 +557,8 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
         val_loss_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and (((epoch+1) >= saveepoch) and ((epoch+1)-saveepoch)%saveinterval == 0):
-            os.makedirs(modelsavedir, exist_ok=True)
-            mdpath = osp.join(modelsavedir, "epoch{}.pth".format(epoch + 1))
-            torch.save(model.state_dict(), mdpath)
+        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
+            save_improve_model(modelsavedir, val_loss_list, model)
 
         #進捗表示
         t2=time.time()
