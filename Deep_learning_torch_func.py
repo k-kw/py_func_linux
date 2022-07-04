@@ -186,11 +186,16 @@ def endimprove(val_loss_list, decision_num, notimpv_cnt, disp_epoch):
 
 
 #model save only improvement 
-def save_improve_model(modelsavedir, val_loss_list, model):
+def save_improve_model(modelsavedir, model, nowloss, minloss=None):
     os.makedirs(modelsavedir, exist_ok=True)
-    if(val_loss_list[-1]<val_loss_list[-2]):
+    if(minloss==None):
+        return nowloss
+    elif(nowloss<minloss):
         mdpath = osp.join(modelsavedir, "sota.pth")
         torch.save(model.state_dict(), mdpath)
+        return nowloss
+    else:
+        return minloss
 
 
 #評価・訓練関数
@@ -295,9 +300,11 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_acc_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
-            save_improve_model(modelsavedir, val_loss_list, model)
-        
+        if (modelsavedir != None):
+            if(epoch+1==saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1])
+            elif(epoch+1>saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
 
         print(f'---------------------------epoch{epoch+1}------------------------------')
         print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
@@ -389,8 +396,11 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_acc_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
-            save_improve_model(modelsavedir, val_loss_list, model)
+        if (modelsavedir != None):
+            if(epoch+1==saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1])
+            elif(epoch+1>saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
         
         #進捗表示
         print(f'----------------------------epoch{epoch+1}------------------------------')
@@ -484,8 +494,11 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
         val_loss_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
-            save_improve_model(modelsavedir, val_loss_list, model)
+        if (modelsavedir != None):
+            if(epoch+1==saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1])
+            elif(epoch+1>saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
 
         #進捗表示
         t2=time.time()
@@ -558,8 +571,11 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
         val_loss_list.append(val_val[0])
 
         #modelを保存
-        if (modelsavedir != None) and ((epoch+1) >= saveepoch):
-            save_improve_model(modelsavedir, val_loss_list, model)
+        if (modelsavedir != None):
+            if(epoch+1==saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1])
+            elif(epoch+1>saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
 
         #進捗表示
         t2=time.time()
