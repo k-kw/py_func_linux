@@ -347,6 +347,34 @@ class simnet_cnn1d(nn.Module):
         #NLLLoss用
         return F.log_softmax(x, dim = 1)
 
+class fc_cnn1d(nn.Module):
+    def __init__(self, first_fc_out, chlist, kslist, poollist, classes, drop, linear2in):
+        super().__init__()
+        self.fc_bfcnn = nn.LazyLinear(first_fc_out)
+        cnn_layernum = len(chlist)-1
+        cnnlist = []
+        for i in range(cnn_layernum):
+            cnnlist.append(Conv1d_Bn_ReLU_Pool(chlist[i], chlist[i+1], kslist[i], poollist[i]))
+        self.CNNS = nn.Sequential(*cnnlist)
+        self.flat = nn.Flatten()
+        self.fc1 = nn.LazyLinear(linear2in)
+        self.fc2 = nn.Linear(linear2in, classes)
+        self.relu = nn.ReLU()
+        self.drop = nn.Dropout(p = drop)
+    def forward(self, x):
+        x = self.fc_bfcnn(x)
+        x = self.relu(x)
+        x = self.drop(x)
+        x = self.CNNS(x)
+        x = self.flat(x)
+        x = self.drop(x)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.drop(x)
+        x = self.fc2(x)
+        #NLLLoss用
+        return F.log_softmax(x, dim = 1)
+
 
 
 #two-dimensional
