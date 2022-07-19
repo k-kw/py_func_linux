@@ -591,7 +591,7 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
                 minloss=val_val[0]
 
             elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[0], minloss, epoch)
+                minloss=save_improve_model(modelsavedir, model, val_val[0], minloss)
 
         #進捗表示
         t2=time.time()
