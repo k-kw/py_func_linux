@@ -186,13 +186,11 @@ def endimprove(val_loss_list, decision_num, notimpv_cnt, disp_epoch):
 
 
 #model save only improvement 
-def save_improve_model(modelsavedir, model, nowloss, minloss=None):
-    os.makedirs(modelsavedir, exist_ok=True)
-    if(minloss==None):
-        return nowloss
-    elif(nowloss<minloss):
+def save_improve_model(modelsavedir, model, nowloss, minloss):
+    if(nowloss<minloss):
         mdpath = osp.join(modelsavedir, "sota.pth")
         torch.save(model.state_dict(), mdpath)
+
         return nowloss
     else:
         return minloss
@@ -299,12 +297,18 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         train_acc_list.append(val_train[0])
         val_acc_list.append(val_val[0])
 
+        
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1])
+                os.makedirs(modelsavedir, exist_ok=True)
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
+                minloss=val_val[1]
+
             elif(epoch+1>saveepoch):
                 minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
+
 
         print(f'---------------------------epoch{epoch+1}------------------------------')
         print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
@@ -398,7 +402,11 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1])
+                os.makedirs(modelsavedir, exist_ok=True)
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
+                minloss=val_val[1]
+
             elif(epoch+1>saveepoch):
                 minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
         
@@ -496,10 +504,14 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1])
-            elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
+                os.makedirs(modelsavedir, exist_ok=True)
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
+                minloss=val_val[0]
 
+            elif(epoch+1>saveepoch):
+                minloss=save_improve_model(modelsavedir, model, val_val[0], minloss)
+        
         #進捗表示
         t2=time.time()
         caltime=(t2-t1)/60
@@ -573,9 +585,13 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1])
+                os.makedirs(modelsavedir, exist_ok=True)
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
+                minloss=val_val[0]
+
             elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
+                minloss=save_improve_model(modelsavedir, model, val_val[0], minloss, epoch)
 
         #進捗表示
         t2=time.time()
@@ -603,7 +619,7 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
 
 
 
-#convert tensor into numpy
+#convert tensor into numpy, 255までにクリップする
 def tensor_to_numpy(input_tensor, normTrue):
   output_numpy = input_tensor.to('cpu').detach().numpy().copy()
   if normTrue:

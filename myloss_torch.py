@@ -5,7 +5,7 @@ from torch.nn import Module
 
 
 class SSIMLoss(Module):
-    def __init__(self, kernel_size: int = 11, sigma: float = 1.5) -> None:
+    def __init__(self, kernel_size: int = 11, sigma: float = 1.5, gray: bool = False) -> None:
 
         """Computes the structural similarity (SSIM) index map between two images.
 
@@ -15,9 +15,15 @@ class SSIMLoss(Module):
         """
 
         super().__init__()
+        if(gray):
+            self.channels=1
+        else:
+            self.channels=3
         self.kernel_size = kernel_size
         self.sigma = sigma
         self.gaussian_kernel = self._create_gaussian_kernel(self.kernel_size, self.sigma)
+
+        
 
     def forward(self, x: Tensor, y: Tensor, as_loss: bool = True) -> Tensor:
 
@@ -35,15 +41,15 @@ class SSIMLoss(Module):
 
         # Compute means
         #kernel_sizeが奇数であれば、xと同じサイズのuxが帰ってくる、各ウィンドウの平均が返ってくる
-        ux = F.conv2d(x, self.gaussian_kernel, padding=self.kernel_size // 2, groups=3)
-        uy = F.conv2d(y, self.gaussian_kernel, padding=self.kernel_size // 2, groups=3)
+        ux = F.conv2d(x, self.gaussian_kernel, padding=self.kernel_size // 2, groups=self.channels)
+        uy = F.conv2d(y, self.gaussian_kernel, padding=self.kernel_size // 2, groups=self.channels)
 
 
         # Compute variances
         #２乗の平均を求める
-        uxx = F.conv2d(x * x, self.gaussian_kernel, padding=self.kernel_size // 2, groups=3)
-        uyy = F.conv2d(y * y, self.gaussian_kernel, padding=self.kernel_size // 2, groups=3)
-        uxy = F.conv2d(x * y, self.gaussian_kernel, padding=self.kernel_size // 2, groups=3)
+        uxx = F.conv2d(x * x, self.gaussian_kernel, padding=self.kernel_size // 2, groups=self.channels)
+        uyy = F.conv2d(y * y, self.gaussian_kernel, padding=self.kernel_size // 2, groups=self.channels)
+        uxy = F.conv2d(x * y, self.gaussian_kernel, padding=self.kernel_size // 2, groups=self.channels)
         vx = uxx - ux * ux
         vy = uyy - uy * uy
         vxy = uxy - ux * uy
@@ -70,8 +76,8 @@ class SSIMLoss(Module):
         #列、行どちらからも見てもガウス分布になるように２次元化,kernel_2dの総和も１
         kernel_2d = torch.matmul(kernel_1d.t(), kernel_1d)
 
-        #3channel分複製
-        kernel_2d = kernel_2d.expand(3, 1, kernel_size, kernel_size).contiguous()
+        #channel分複製
+        kernel_2d = kernel_2d.expand(self.channels, 1, kernel_size, kernel_size).contiguous()
 
         #kernel_2dは、２次元ガウス分布に従った重みの2次元行列
         return kernel_2d
