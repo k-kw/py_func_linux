@@ -167,34 +167,6 @@ def endmean(val_loss_list, decision_num, decision_mean, disp_epoch):
         endflg=False
     return endflg
 
-#not debug
-#decision_numだけ改善が見られなければ終了
-def endimprove(val_loss_list, decision_num, notimpv_cnt, disp_epoch):
-    #前回に比べ改善していない場合,count up
-    if(val_loss_list[-1]>=val_loss_list[-2]):
-        notimpv_cnt+=1
-    #改善されている場合,0
-    else:
-        notimpv_cnt=0
-    if(notimpv_cnt>=decision_num):
-        print(f'loss was not improved in decision_num, so ended at epoch{disp_epoch}.\n')
-        endflg=True
-    else:
-        endflg=False
-    return notimpv_cnt, endflg
-
-
-
-#model save only improvement 
-def save_improve_model(modelsavedir, model, nowloss, minloss):
-    if(nowloss<minloss):
-        mdpath = osp.join(modelsavedir, "sota.pth")
-        torch.save(model.state_dict(), mdpath)
-
-        return nowloss
-    else:
-        return minloss
-
 
 #評価・訓練関数
 #Deep Learning validation(image classification)
@@ -257,6 +229,7 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     val_loss_list = []
     train_acc_list = []
     val_acc_list = []
+    endflg=False
 
     if(mean_or_improve=="improve"):
         notimpv_cnt=0
@@ -298,16 +271,28 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_acc_list.append(val_val[0])
 
         
+        #最小損失の更新
+        if(epoch==0):
+            notimpv_cnt=0
+            minloss=val_val[0]
+            flg=True
+        elif(minloss>val_val[0]):
+            notimpv_cnt=0
+            minloss=val_val[0]
+            flg=True
+        else:
+            notimpv_cnt+=1
+            flg=False
+
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
                 os.makedirs(modelsavedir, exist_ok=True)
                 mdpath = osp.join(modelsavedir, "sota.pth")
                 torch.save(model.state_dict(), mdpath)
-                minloss=val_val[1]
-
-            elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
+            elif(epoch+1>saveepoch and flg):
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
 
 
         print(f'---------------------------epoch{epoch+1}------------------------------')
@@ -326,9 +311,11 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
             
         #改善を指定した場合
         elif(mean_or_improve=="improve" and epoch>=1):
-            notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
+            if(notimpv_cnt>=decision_num):
+                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+                endflg=True
             if(endflg):
-                break           
+                break       
 
     return train_loss_list, val_loss_list, train_acc_list, val_acc_list
 
@@ -355,6 +342,8 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     val_loss_list = []
     train_acc_list = []
     val_acc_list = []
+    endflg=False
+
 
     if(mean_or_improve=="improve"):
         notimpv_cnt=0
@@ -399,16 +388,28 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         train_acc_list.append(val_train[0])
         val_acc_list.append(val_val[0])
 
+        #最小損失の更新
+        if(epoch==0):
+            notimpv_cnt=0
+            minloss=val_val[1]
+            flg=True
+        elif(minloss>val_val[1]):
+            notimpv_cnt=0
+            minloss=val_val[1]
+            flg=True
+        else:
+            notimpv_cnt+=1
+            flg=False
+
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
                 os.makedirs(modelsavedir, exist_ok=True)
                 mdpath = osp.join(modelsavedir, "sota.pth")
                 torch.save(model.state_dict(), mdpath)
-                minloss=val_val[1]
-
-            elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[1], minloss)
+            elif(epoch+1>saveepoch and flg):
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
         
         #進捗表示
         print(f'----------------------------epoch{epoch+1}------------------------------')
@@ -427,7 +428,9 @@ def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
             
         #改善を指定した場合
         elif(mean_or_improve=="improve" and epoch>=1):
-            notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
+            if(notimpv_cnt>=decision_num):
+                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+                endflg=True
             if(endflg):
                 break
 
@@ -470,6 +473,7 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
     t1=time.time()
     train_loss_list=[]
     val_loss_list=[]
+    endflg=False
 
     if(mean_or_improve=="improve"):
         notimpv_cnt=0
@@ -501,16 +505,28 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
         train_loss_list.append(val_train[0])
         val_loss_list.append(val_val[0])
 
+        #最小損失の更新
+        if(epoch==0):
+            notimpv_cnt=0
+            minloss=val_val[0]
+            flg=True
+        elif(minloss>val_val[0]):
+            notimpv_cnt=0
+            minloss=val_val[0]
+            flg=True
+        else:
+            notimpv_cnt+=1
+            flg=False
+
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
                 os.makedirs(modelsavedir, exist_ok=True)
                 mdpath = osp.join(modelsavedir, "sota.pth")
                 torch.save(model.state_dict(), mdpath)
-                minloss=val_val[0]
-
-            elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[0], minloss)
+            elif(epoch+1>saveepoch and flg):
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
         
         #進捗表示
         t2=time.time()
@@ -528,7 +544,9 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
             
         #改善を指定した場合
         elif(mean_or_improve=="improve" and epoch>=1):
-            notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
+            if(notimpv_cnt>=decision_num):
+                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+                endflg=True
             if(endflg):
                 break
 
@@ -548,6 +566,7 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
     t1=time.time()
     train_loss_list=[]
     val_loss_list=[]
+    endflg=False
 
     #ガウシアンノイズ付与レイヤを定義
     if (gausnoise):
@@ -582,16 +601,28 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
         train_loss_list.append(val_train[0])
         val_loss_list.append(val_val[0])
 
+        #最小損失の更新
+        if(epoch==0):
+            notimpv_cnt=0
+            minloss=val_val[0]
+            flg=True
+        elif(minloss>val_val[0]):
+            notimpv_cnt=0
+            minloss=val_val[0]
+            flg=True
+        else:
+            notimpv_cnt+=1
+            flg=False
+
         #modelを保存
         if (modelsavedir != None):
             if(epoch+1==saveepoch):
                 os.makedirs(modelsavedir, exist_ok=True)
                 mdpath = osp.join(modelsavedir, "sota.pth")
                 torch.save(model.state_dict(), mdpath)
-                minloss=val_val[0]
-
-            elif(epoch+1>saveepoch):
-                minloss=save_improve_model(modelsavedir, model, val_val[0], minloss)
+            elif(epoch+1>saveepoch and flg):
+                mdpath = osp.join(modelsavedir, "sota.pth")
+                torch.save(model.state_dict(), mdpath)
 
         #進捗表示
         t2=time.time()
@@ -609,7 +640,9 @@ def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, dev
             
         #改善を指定した場合
         elif(mean_or_improve=="improve" and epoch>=1):
-            notimpv_cnt, endflg = endimprove(val_loss_list, decision_num, notimpv_cnt, epoch+1)
+            if(notimpv_cnt>=decision_num):
+                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+                endflg=True
             if(endflg):
                 break
 
