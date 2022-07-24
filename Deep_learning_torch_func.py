@@ -663,7 +663,7 @@ def tensor_to_numpy(input_tensor, normTrue):
   return output_numpy
 
 #test a decode model and check a output-image
-def test_decode_model_and_check_img_ver3(dataloader, img_width, img_height, model, device, figwidth, figheighgt, from_num, to_num, save_dir_path,
+def test_decode_model_and_check_img_ver3(dataloader, img_width, img_height, model, device, figwidth, figheight, from_num, to_num, save_dir_path,
 datanorm = False, correctimgnorm = False):
     """
     datanorm: Bool 
@@ -678,7 +678,7 @@ datanorm = False, correctimgnorm = False):
     displength=to_num-from_num+1
 
     
-    plt.rcParams["figure.figsize"] = (figwidth, figheighgt)
+    # plt.rcParams["figure.figsize"] = (figwidth, figheighgt)
     fig = plt.figure()
 
     #PSNR配列
@@ -714,7 +714,7 @@ datanorm = False, correctimgnorm = False):
                     plt.imshow(output_img_array)
                     plt.gray()
                 img_num += 1
-
+    fig.set_size_inches(figwidth, figheight)
     plt.show()
     os.makedirs(save_dir_path, exist_ok=True)
     savepath = osp.join(save_dir_path, "restore_result.jpg")
