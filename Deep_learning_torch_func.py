@@ -663,65 +663,64 @@ def tensor_to_numpy(input_tensor, normTrue):
   return output_numpy
 
 #test a decode model and check a output-image
-def test_decode_model_and_check_img_ver3(dataloader, img_width, img_height, model, device, figwidth, figheighgt, from_num, to_num, save_dir_path, \
-  label_array = None, datanorm = False, correctimgnorm = False):
-  """
-  datanorm: Bool 
-  正規化した復元画像を出力するよう訓練したモデルはTrue
-  画素値をそのまま出力するよう訓練したモデルはFalse
-  """
-  import numpy as np
-  import cv2
-  #評価モード
-  model.eval()
-  img_num = 1
-  #PSNR配列
-  psnrs = []
-  #SSIM配列
-  ssims = []
+def test_decode_model_and_check_img_ver3(dataloader, img_width, img_height, model, device, figwidth, figheighgt, from_num, to_num, save_dir_path,
+datanorm = False, correctimgnorm = False):
+    """
+    datanorm: Bool 
+    正規化した復元画像を出力するよう訓練したモデルはTrue
+    画素値をそのまま出力するよう訓練したモデルはFalse
+    """
+    import numpy as np
+    import cv2
+    #評価モード
+    model.eval()
+    img_num = 1
+    displength=to_num-from_num+1
 
-  with torch.no_grad():
-    for inputs, origin in dataloader:
-      inputs, origin = inputs.to(device), origin.to(device)
-      inputs = Variable(inputs)
-      outputs = model(inputs)
-      for i in range(len(outputs)):
-        output_img_array = tensor_to_numpy(outputs[i], datanorm)
-        output_img_array = np.resize(output_img_array,(img_height,img_width))
+    
+    plt.rcParams["figure.figsize"] = (figwidth, figheighgt)
+    fig = plt.figure()
 
-        origin_img_array = tensor_to_numpy(origin[i], correctimgnorm)
-        origin_img_array = np.resize(origin_img_array,(img_height,img_width))
+    #PSNR配列
+    psnrs = []
+    #SSIM配列
+    ssims = []
 
-        #PSNR算出
-        psnr = cv2.PSNR(output_img_array, origin_img_array)
-        psnrs.append(psnr)
+    with torch.no_grad():
+        for inputs, origin in dataloader:
+            inputs, origin = inputs.to(device), origin.to(device)
+            inputs = Variable(inputs)
+            outputs = model(inputs)
+            for i in range(len(outputs)):
+                output_img_array = tensor_to_numpy(outputs[i], datanorm)
+                output_img_array = np.resize(output_img_array,(img_height,img_width))
 
-        #SSIM算出
-        ssimvalue = ssim(output_img_array, origin_img_array)
-        ssims.append(ssimvalue)
+                origin_img_array = tensor_to_numpy(origin[i], correctimgnorm)
+                origin_img_array = np.resize(origin_img_array,(img_height,img_width))
 
-        if from_num <= img_num and img_num <= to_num:
-            plt.rcParams["figure.figsize"] = (figwidth, figheighgt)
-            fig = plt.figure()
+                #PSNR算出
+                psnr = cv2.PSNR(output_img_array, origin_img_array)
+                psnrs.append(psnr)
 
-            if label_array is None:
-                plt.title('title')
-            else :
-                plt.title(label_array[img_num - 1])
-            
-            plt.subplot(1,2,1)
-            plt.imshow(output_img_array)
-            plt.gray()
-            plt.subplot(1,2,2)
-            plt.imshow(origin_img_array)
-            plt.gray()
-            plt.show()
-            os.makedirs(save_dir_path, exist_ok=True)
-            savepath = osp.join(save_dir_path, "{}.jpg".format(i))
-            fig.savefig(savepath)
+                #SSIM算出
+                ssimvalue = ssim(output_img_array, origin_img_array)
+                ssims.append(ssimvalue)
 
-        img_num += 1
-  return psnrs, ssims
+                if from_num <= img_num and img_num <= to_num:    
+                    plt.subplot(2,displength,img_num-from_num+1)
+                    plt.imshow(origin_img_array)
+                    plt.gray()
+                    plt.subplot(2,displength,img_num-from_num+1+displength)
+                    plt.imshow(output_img_array)
+                    plt.gray()
+                img_num += 1
+
+    plt.show()
+    os.makedirs(save_dir_path, exist_ok=True)
+    savepath = osp.join(save_dir_path, "restore_result.jpg")
+    fig.savefig(savepath)
+
+    return psnrs, ssims
 
 
 
