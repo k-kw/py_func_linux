@@ -214,7 +214,7 @@ def val_model(dataloader, model, device, lossfunc, predict_label_list_true):
 
 #Deep Learning(image classification)
 #MIXUP
-def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
+def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, dspinter, 
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     L1 = False, alpha = None, L2 = False, lamda = None, #正則化
@@ -229,7 +229,6 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     val_loss_list = []
     train_acc_list = []
     val_acc_list = []
-    endflg=False
 
     if(mean_or_improve=="improve"):
         notimpv_cnt=0
@@ -272,11 +271,7 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
 
         
         #最小損失の更新
-        if(epoch==0):
-            notimpv_cnt=0
-            minloss=val_val[0]
-            flg=True
-        elif(minloss>val_val[0]):
+        if(epoch==0 or minloss>val_val[0]):
             notimpv_cnt=0
             minloss=val_val[0]
             flg=True
@@ -295,27 +290,26 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
                 torch.save(model.state_dict(), mdpath)
 
 
-        print(f'---------------------------epoch{epoch+1}------------------------------')
-        print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
-        t2=time.time()
-        caltime=(t2-t1)/60
-        print(f'epochtime:{caltime:.4f} minutes')
-        t1=time.time()
+        if((epoch+1)%dspinter==0):
+            print(f'---------------------------epoch{epoch+1}------------------------------')
+            print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
+            t2=time.time()
+            caltime=(t2-t1)/60
+            print(f'{dspinter}epochtime:{caltime:.4f} minutes')
+            t1=time.time()
+        
+        
 
         #終了判定
         #平均を指定した場合
-        if(mean_or_improve=="mean"):
-            endflg = endmean(val_loss_list, decision_num, decision_mean, epoch+1)
-            if(endflg):
-                break
+        if(mean_or_improve=="mean" and endmean(val_loss_list, decision_num, decision_mean, epoch+1)):
+            break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve" and epoch>=1):
-            if(notimpv_cnt>=decision_num):
-                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
-                endflg=True
-            if(endflg):
-                break       
+        elif(mean_or_improve=="improve" and epoch>=1 and notimpv_cnt>=decision_num):
+            print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+            break     
+                  
 
     return train_loss_list, val_loss_list, train_acc_list, val_acc_list
 
@@ -323,7 +317,7 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
 
 
 #Deep Learning(image classification)
-def train_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
+def train_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, dspinter,
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     L1 = False, alpha = None, L2 = False, lamda = None,
@@ -342,7 +336,6 @@ def train_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     val_loss_list = []
     train_acc_list = []
     val_acc_list = []
-    endflg=False
 
 
     if(mean_or_improve=="improve"):
@@ -389,11 +382,7 @@ def train_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_acc_list.append(val_val[0])
 
         #最小損失の更新
-        if(epoch==0):
-            notimpv_cnt=0
-            minloss=val_val[1]
-            flg=True
-        elif(minloss>val_val[1]):
+        if(epoch==0 or minloss>val_val[1]):
             notimpv_cnt=0
             minloss=val_val[1]
             flg=True
@@ -412,27 +401,24 @@ def train_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
                 torch.save(model.state_dict(), mdpath)
         
         #進捗表示
-        print(f'----------------------------epoch{epoch+1}------------------------------')
-        print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
-        t2=time.time()
-        caltime=(t2-t1)/60
-        print(f'epochtime:{caltime:.4f} minutes')
-        t1=time.time()
+        if((epoch+1)%dspinter==0):
+            print(f'----------------------------epoch{epoch+1}------------------------------')
+            print(f'train_loss{val_train[1]:.4f} ,train_acc{val_train[0]:.4f}, val_loss{val_val[1]:.4f} ,val_acc{val_val[0]:.4f}')
+            t2=time.time()
+            caltime=(t2-t1)/60
+            print(f'{dspinter}epochtime:{caltime:.4f} minutes')
+            t1=time.time()
+        
 
         #終了判定
         #平均を指定した場合
-        if(mean_or_improve=="mean"):
-            endflg = endmean(val_loss_list, decision_num, decision_mean, epoch+1)
-            if(endflg):
-                break
+        if(mean_or_improve=="mean" and endmean(val_loss_list, decision_num, decision_mean, epoch+1)):
+            break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve" and epoch>=1):
-            if(notimpv_cnt>=decision_num):
-                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
-                endflg=True
-            if(endflg):
-                break
+        elif(mean_or_improve=="improve" and epoch>=1 and notimpv_cnt>=decision_num):
+            print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+            break   
 
     return train_loss_list, val_loss_list, train_acc_list, val_acc_list
 
@@ -465,7 +451,7 @@ def val_decode_model(dataloader, model, device, lossfunc):
 
 
 #Deep Learning(decode)
-def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
+def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, dspinter,
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     mixalpha = 1.0, scheduler = None, 
@@ -473,7 +459,6 @@ def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
     t1=time.time()
     train_loss_list=[]
     val_loss_list=[]
-    endflg=False
 
     if(mean_or_improve=="improve"):
         notimpv_cnt=0
@@ -506,11 +491,7 @@ def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
         val_loss_list.append(val_val[0])
 
         #最小損失の更新
-        if(epoch==0):
-            notimpv_cnt=0
-            minloss=val_val[0]
-            flg=True
-        elif(minloss>val_val[0]):
+        if(epoch==0 or minloss>val_val[0]):
             notimpv_cnt=0
             minloss=val_val[0]
             flg=True
@@ -529,35 +510,33 @@ def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
                 torch.save(model.state_dict(), mdpath)
         
         #進捗表示
-        t2=time.time()
-        caltime=(t2-t1)/60
-        print(f'--------------------------epoch{epoch+1}--------------------------------')
-        print(f'epochtime:{caltime:.4f} minutes\n, train_loss:{val_train[0]*1000:.4f}, val_loss:{val_val[0]*1000:.4f}')
-        t1=time.time()
+        if((epoch+1)%dspinter==0):
+            t2=time.time()
+            caltime=(t2-t1)/60
+            print(f'--------------------------epoch{epoch+1}--------------------------------')
+            print(f'{dspinter}epochtime:{caltime:.4f} minutes\n, train_loss:{val_train[0]*1000:.4f}, val_loss:{val_val[0]*1000:.4f}')
+            t1=time.time()
 
         #終了判定
         #平均を指定した場合
-        if(mean_or_improve=="mean"):
-            endflg = endmean(val_loss_list, decision_num, decision_mean, epoch+1)
-            if(endflg):
-                break
+        if(mean_or_improve=="mean" and endmean(val_loss_list, decision_num, decision_mean, epoch+1)):
+            break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve" and epoch>=1):
-            if(notimpv_cnt>=decision_num):
-                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
-                endflg=True
-            if(endflg):
-                break
+        elif(mean_or_improve=="improve" and epoch>=1 and notimpv_cnt>=decision_num):
+            print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+            break
+                
 
     return train_loss_list, val_loss_list
 
 
 
 #Deep Learning(decode)
-def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, scheduler = None, 
+def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, dspinter, 
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
+    scheduler = None, 
     gausnoise = False, stddev = 0.01, 
     modelsavedir = None, saveepoch = 100):
     """
@@ -566,7 +545,6 @@ def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
     t1=time.time()
     train_loss_list=[]
     val_loss_list=[]
-    endflg=False
 
     #ガウシアンノイズ付与レイヤを定義
     if (gausnoise):
@@ -602,11 +580,7 @@ def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
         val_loss_list.append(val_val[0])
 
         #最小損失の更新
-        if(epoch==0):
-            notimpv_cnt=0
-            minloss=val_val[0]
-            flg=True
-        elif(minloss>val_val[0]):
+        if(epoch==0 or minloss>val_val[0]):
             notimpv_cnt=0
             minloss=val_val[0]
             flg=True
@@ -625,26 +599,23 @@ def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
                 torch.save(model.state_dict(), mdpath)
 
         #進捗表示
-        t2=time.time()
-        caltime=(t2-t1)/60
-        print(f'-----------------------------epoch{epoch+1}--------------------------------')
-        print(f'epochtime:{caltime:.4f} minutes\n train_loss:{val_train[0]*1000:.4f}, val_loss:{val_val[0]*1000:.4f}')
-        t1=time.time()
+        if((epoch+1)%dspinter==0):
+            t2=time.time()
+            caltime=(t2-t1)/60
+            print(f'-----------------------------epoch{epoch+1}--------------------------------')
+            print(f'{dspinter}epochtime:{caltime:.4f} minutes\n train_loss:{val_train[0]*1000:.4f}, val_loss:{val_val[0]*1000:.4f}')
+            t1=time.time()
 
         #終了判定
         #平均を指定した場合
-        if(mean_or_improve=="mean"):
-            endflg = endmean(val_loss_list, decision_num, decision_mean, epoch+1)
-            if(endflg):
-                break
+        if(mean_or_improve=="mean" and endmean(val_loss_list, decision_num, decision_mean, epoch+1)):
+            break
             
         #改善を指定した場合
-        elif(mean_or_improve=="improve" and epoch>=1):
-            if(notimpv_cnt>=decision_num):
-                print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
-                endflg=True
-            if(endflg):
-                break
+        elif(mean_or_improve=="improve" and epoch>=1 and notimpv_cnt>=decision_num):
+            print(f'loss was not improved in decision_num, so ended at epoch{epoch+1}.\n')
+            break
+                
 
     return train_loss_list, val_loss_list
 
