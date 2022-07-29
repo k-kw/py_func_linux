@@ -323,7 +323,7 @@ def train_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device,
 
 
 #Deep Learning(image classification)
-def train_model_ver3(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
+def train_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     L1 = False, alpha = None, L2 = False, lamda = None,
@@ -465,7 +465,7 @@ def val_decode_model(dataloader, model, device, lossfunc):
 
 
 #Deep Learning(decode)
-def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
+def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, 
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     mixalpha = 1.0, scheduler = None, 
@@ -555,7 +555,7 @@ def train_decode_model_mixup(dlt, dlv, model, lossfunc, optimizer, maxepochs, de
 
 
 #Deep Learning(decode)
-def train_decode_model_ver2(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, scheduler = None, 
+def train_decode_model(dlt, dlv, model, lossfunc, optimizer, maxepochs, device, scheduler = None, 
     mean_or_improve = None, decision_num = 10, decision_mean = None, #学習終了条件, 
     #meanのとき最後からdicision_numまでの平均lossがdecision_meanを下回ったら終了, improveのときdecision_numだけ改善がなければ終了
     gausnoise = False, stddev = 0.01, 
@@ -663,7 +663,7 @@ def tensor_to_numpy(input_tensor, normTrue):
   return output_numpy
 
 #test a decode model and check a output-image
-def test_decode_model_and_check_img_ver3(dataloader, img_width, img_height, model, device, figwidth, figheight, from_num, to_num, save_dir_path,
+def test_decode_model_and_check_img(dataloader, img_width, img_height, model, device, figwidth, figheight, from_num, to_num, save_dir_path,
 datanorm = False, correctimgnorm = False):
     """
     datanorm: Bool 
