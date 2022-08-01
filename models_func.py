@@ -1,3 +1,4 @@
+from turtle import forward
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -181,6 +182,18 @@ class Conv1d_Bn_LeakyReLU(nn.Module):
         )
     def forward(self, x):
         x = self.CNN1d(x)
+        return x
+
+class fc_relu_drop(nn.Module):
+    def __init__(self, insize, outsize, drop):
+        super().__init__()
+        self.fc = nn.Linear(insize, outsize)
+        self.relu = nn.ReLU()
+        self.drop = nn.Dropout(p = drop)
+    def forward(self, x):
+        x=self.fc(x)
+        x=self.relu(x)
+        x=self.drop(x)
         return x
 
 #model
@@ -375,6 +388,21 @@ class fc_cnn1d(nn.Module):
         #NLLLoss用
         return F.log_softmax(x, dim = 1)
 
+class fc_only(nn.Module):
+    def __init__(self, sizelist, droplist):
+        super().__init__()
+        fclist=[]
+        for i in range(len(sizelist)-2):
+            fclist.append(fc_relu_drop(sizelist[i], sizelist[i+1], droplist[i]))
+        self.FCS = nn.Sequential(*fclist)
+        self.flat = nn.Flatten()
+
+        self.fclast=nn.Linear(sizelist[-2], sizelist[-1])
+    def forward(self,x):
+        x=self.flat(x)
+        x=self.FCS(x)
+        x=self.fclast(x)
+        return F.log_softmax(x, dim = 1)
 
 
 #two-dimensional
